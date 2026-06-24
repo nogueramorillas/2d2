@@ -261,7 +261,15 @@
     <!-- SOCIAL PANEL -->
     <div class="panel" id="panel-social">
       <div class="panel-title">Redes Sociales</div>
-      <div class="panel-desc">Configura los enlaces y handles de Discord y Twitch.</div>
+      <div class="panel-desc">Configura los enlaces de todas las redes sociales.</div>
+      <div class="social-editor">
+        <h4>Instagram</h4>
+        <div class="field"><label>URL del perfil</label><input type="text" id="instagram-url" placeholder="https://instagram.com/2d2esports" /></div>
+      </div>
+      <div class="social-editor">
+        <h4>TikTok</h4>
+        <div class="field"><label>URL del perfil</label><input type="text" id="tiktok-url" placeholder="https://tiktok.com/@2d2esports" /></div>
+      </div>
       <div class="social-editor">
         <h4>Discord</h4>
         <div class="field"><label>URL de invitación</label><input type="text" id="discord-url" placeholder="https://discord.gg/..." /></div>
@@ -548,6 +556,8 @@ function deletePlay(map, index) {
 function renderSocial() {
   const d=getData();
   const s=d.social||{};
+  document.getElementById('instagram-url').value=s.instagramUrl||'';
+  document.getElementById('tiktok-url').value=s.tiktokUrl||'';
   document.getElementById('discord-url').value=s.discordUrl||'';
   document.getElementById('discord-handle').value=s.discordHandle||'Únete al servidor';
   document.getElementById('twitch-url').value=s.twitchUrl||'';
@@ -580,6 +590,8 @@ function saveAll() {
 
   // Social
   d.social={
+    instagramUrl:document.getElementById('instagram-url').value.trim(),
+    tiktokUrl:document.getElementById('tiktok-url').value.trim(),
     discordUrl:document.getElementById('discord-url').value.trim(),
     discordHandle:document.getElementById('discord-handle').value.trim()||'Únete al servidor',
     twitchUrl:document.getElementById('twitch-url').value.trim(),
