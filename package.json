@@ -1,0 +1,10 @@
+{
+  "name": "2d2-esports",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "serve . -l $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}

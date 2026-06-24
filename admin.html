@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — 2D2 Esports</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --blue:#3B82F6;--purple:#8B5CF6;
+      --blue-l:#60A5FA;--purple-l:#A78BFA;
+      --bg:#050508;--bg2:#0A0A0F;--bg3:#0F0F1A;--bg4:#14141F;
+      --border:rgba(139,92,246,0.2);--text:#E2E8F0;--muted:#94A3B8;
+      --green:#22C55E;--red:#EF4444;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--purple)}
+
+    /* TOPBAR */
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:60px;
+      background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+    .topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .topbar-logo-img{width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid var(--purple)}
+    .topbar-logo-img img{width:100%;height:100%;object-fit:cover;display:block}
+    .topbar-title{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;
+      background:linear-gradient(90deg,var(--blue-l),var(--purple-l));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .topbar-right{display:flex;align-items:center;gap:12px}
+    .save-all-btn{padding:8px 20px;background:linear-gradient(135deg,var(--blue),var(--purple));
+      color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;
+      font-size:.85rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+    .save-all-btn:hover{box-shadow:0 4px 16px rgba(139,92,246,.4);transform:translateY(-1px)}
+    .back-btn{padding:7px 16px;background:transparent;color:var(--muted);border:1px solid var(--border);
+      border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:700;
+      letter-spacing:1px;text-transform:uppercase;text-decoration:none;transition:all .2s}
+    .back-btn:hover{border-color:var(--muted);color:var(--text)}
+    .saved-toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#fff;
+      padding:12px 24px;border-radius:6px;font-weight:700;font-size:.9rem;letter-spacing:1px;
+      transform:translateY(80px);opacity:0;transition:all .3s;z-index:999}
+    .saved-toast.show{transform:translateY(0);opacity:1}
+
+    /* LAYOUT */
+    .admin-layout{display:flex;min-height:calc(100vh - 60px)}
+    .sidebar{width:200px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:24px 0}
+    .sidebar-item{display:flex;align-items:center;gap:10px;padding:12px 24px;cursor:pointer;
+      color:var(--muted);font-size:.88rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+      transition:all .2s;border-left:3px solid transparent}
+    .sidebar-item:hover{color:var(--text);background:rgba(139,92,246,.06)}
+    .sidebar-item.active{color:var(--purple-l);border-left-color:var(--purple);background:rgba(139,92,246,.1)}
+    .sidebar-item span{font-size:1rem}
+    .main-content{flex:1;padding:36px 40px;overflow-y:auto}
+
+    /* PANELS */
+    .panel{display:none}
+    .panel.active{display:block}
+    .panel-title{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:6px}
+    .panel-desc{font-size:.9rem;color:var(--muted);margin-bottom:32px}
+
+    /* FORM ELEMENTS */
+    .field{margin-bottom:18px}
+    .field label{display:block;font-size:.68rem;font-weight:700;letter-spacing:2px;
+      text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+    .field input,.field textarea,.field select{width:100%;background:var(--bg3);
+      border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:#fff;
+      font-family:'Rajdhani',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
+    .field input:focus,.field textarea:focus{border-color:var(--purple)}
+    .field textarea{resize:vertical;min-height:70px}
+
+    /* PLAYER EDITORS */
+    .player-editors{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+    .player-editor{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .player-editor-header{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+      color:var(--purple-l);margin-bottom:12px}
+    .photo-upload-area{width:100%;aspect-ratio:1;border:2px dashed var(--border);border-radius:8px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+      cursor:pointer;transition:all .2s;margin-bottom:12px;position:relative;overflow:hidden;
+      background:var(--bg4)}
+    .photo-upload-area:hover{border-color:var(--purple);background:rgba(139,92,246,.06)}
+    .photo-upload-area img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .photo-upload-area .upload-icon{font-size:1.8rem;z-index:1}
+    .photo-upload-area .upload-label{font-size:.7rem;color:var(--muted);z-index:1;text-align:center;padding:0 8px}
+    .photo-upload-area input[type=file]{display:none}
+    .remove-photo-btn{width:100%;padding:6px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+      border-radius:4px;color:var(--red);cursor:pointer;font-family:'Rajdhani',sans-serif;
+      font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s;margin-bottom:10px}
+    .remove-photo-btn:hover{background:rgba(239,68,68,.2)}
+
+    /* COACH EDITOR */
+    .coach-editor{background:var(--bg3);border:2px solid var(--purple);border-radius:10px;
+      padding:20px;display:flex;gap:20px;align-items:flex-start;margin-bottom:32px;flex-wrap:wrap}
+    .coach-photo-col{flex-shrink:0}
+    .coach-photo-upload{width:160px;height:160px;border:2px dashed var(--border);border-radius:10px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+      cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:var(--bg4)}
+    .coach-photo-upload:hover{border-color:var(--purple)}
+    .coach-photo-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .coach-photo-upload .upload-icon{font-size:2.2rem;z-index:1}
+    .coach-photo-upload .upload-label{font-size:.7rem;color:var(--muted);z-index:1;text-align:center}
+    .coach-photo-upload input[type=file]{display:none}
+    .coach-fields{flex:1;min-width:180px}
+
+    /* SUBS */
+    .subs-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+    .sub-editor{background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+      padding:14px;display:flex;gap:14px;align-items:center}
+    .sub-photo-upload{width:52px;height:52px;border:2px dashed var(--border);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+      position:relative;overflow:hidden;background:var(--bg4);font-size:1.2rem;transition:all .2s}
+    .sub-photo-upload:hover{border-color:var(--purple)}
+    .sub-photo-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .sub-photo-upload input[type=file]{display:none}
+    .sub-fields{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .sub-fields input{background:var(--bg4);border:1px solid var(--border);border-radius:4px;
+      padding:7px 10px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:.88rem;outline:none;
+      transition:border-color .2s;width:100%}
+    .sub-fields input:focus{border-color:var(--purple)}
+    .del-sub-btn{width:30px;height:30px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+      border-radius:4px;color:var(--red);cursor:pointer;font-size:1rem;flex-shrink:0;transition:all .2s}
+    .del-sub-btn:hover{background:rgba(239,68,68,.2)}
+    .add-sub-btn{padding:9px 20px;background:rgba(139,92,246,.15);border:1px solid var(--purple);
+      border-radius:4px;color:var(--purple-l);cursor:pointer;font-family:'Rajdhani',sans-serif;
+      font-size:.82rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+    .add-sub-btn:hover{background:rgba(139,92,246,.28)}
+
+    /* SERVER */
+    .server-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:24px;max-width:560px}
+    .server-preview{margin-top:16px;font-family:'Orbitron',sans-serif;font-size:.95rem;
+      color:var(--blue-l);padding:12px 16px;background:var(--bg4);border-radius:6px;word-break:break-all}
+
+    /* MAPS */
+    .map-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+    .map-sel-btn{padding:7px 18px;border:1px solid var(--border);border-radius:4px;background:transparent;
+      color:var(--muted);cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:700;
+      letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+    .map-sel-btn:hover,.map-sel-btn.active{border-color:var(--purple);color:var(--purple-l);background:rgba(139,92,246,.1)}
+    .map-edit-panel{display:none}
+    .map-edit-panel.active{display:block}
+    .plays-admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:24px}
+    .play-admin-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    .play-admin-img{width:100%;height:150px;overflow:hidden;
+      background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08));
+      display:flex;align-items:center;justify-content:center;font-size:2rem;position:relative}
+    .play-admin-img img{width:100%;height:100%;object-fit:cover;display:block}
+    .play-admin-body{padding:10px 12px}
+    .play-admin-title{font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;color:#fff;margin-bottom:4px}
+    .play-admin-desc{font-size:.75rem;color:var(--muted);margin-bottom:10px}
+    .del-play-btn{width:100%;padding:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+      border-radius:4px;color:var(--red);cursor:pointer;font-family:'Rajdhani',sans-serif;
+      font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+    .del-play-btn:hover{background:rgba(239,68,68,.2)}
+    .add-play-form{background:var(--bg3);border:1px solid var(--purple);border-radius:10px;padding:20px}
+    .add-play-form h4{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;color:var(--purple-l);margin-bottom:16px}
+    .add-play-photo{width:100%;height:160px;border:2px dashed var(--border);border-radius:8px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+      cursor:pointer;transition:all .2s;margin-bottom:12px;position:relative;overflow:hidden;background:var(--bg4)}
+    .add-play-photo:hover{border-color:var(--purple)}
+    .add-play-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .add-play-photo .upload-icon{font-size:1.8rem;z-index:1}
+    .add-play-photo .upload-label{font-size:.7rem;color:var(--muted);z-index:1}
+    .add-play-photo input[type=file]{display:none}
+    .add-play-btn{width:100%;padding:11px;background:linear-gradient(135deg,var(--blue),var(--purple));
+      color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;
+      font-size:.9rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s;margin-top:4px}
+    .add-play-btn:hover{box-shadow:0 4px 16px rgba(139,92,246,.4)}
+    .no-plays-admin{padding:40px 20px;text-align:center;color:var(--muted);font-size:.9rem}
+    .no-plays-admin span{font-size:2rem;display:block;margin-bottom:8px}
+
+    /* SOCIAL PANEL */
+    .social-editor{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;max-width:500px;margin-bottom:16px}
+    .social-editor h4{font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:700;color:var(--purple-l);margin-bottom:14px}
+
+    @media(max-width:700px){
+      .sidebar{display:none}
+      .main-content{padding:24px 16px}
+    }
+  </style>
+</head>
+<body>
+
+<div class="saved-toast" id="toast">✅ Guardado correctamente</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <div class="topbar-logo-img"><img src="imagenes/2d2.jpg" alt="2D2" /></div>
+    <span class="topbar-title">2D2 · ADMIN</span>
+  </a>
+  <div class="topbar-right">
+    <a href="index.html" class="back-btn">← Ver web</a>
+    <button class="save-all-btn" onclick="saveAll()">💾 Guardar todo</button>
+  </div>
+</div>
+
+<div class="admin-layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-item active" onclick="showPanel('equipo')"><span>👥</span>Equipo</div>
+    <div class="sidebar-item" onclick="showPanel('servidor')"><span>🖥️</span>Servidor</div>
+    <div class="sidebar-item" onclick="showPanel('mapas')"><span>🗺️</span>Mapas</div>
+    <div class="sidebar-item" onclick="showPanel('social')"><span>📱</span>Redes</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- EQUIPO PANEL -->
+    <div class="panel active" id="panel-equipo">
+      <div class="panel-title">Gestión del Equipo</div>
+      <div class="panel-desc">Edita los jugadores, fotos y roles. Las fotos se guardan en el navegador.</div>
+
+      <!-- COACH -->
+      <h3 style="font-family:'Orbitron',sans-serif;font-size:.9rem;color:var(--purple-l);margin-bottom:14px;letter-spacing:2px;">ENTRENADOR</h3>
+      <div class="coach-editor">
+        <div class="coach-photo-col">
+          <div class="coach-photo-upload" id="coach-photo-wrap" onclick="document.getElementById('coach-file').click()">
+            <span class="upload-icon">📷</span>
+            <span class="upload-label">Subir foto</span>
+            <input type="file" id="coach-file" accept="image/*" onchange="handlePhoto(this,'coach',null,'coach-photo-wrap')" />
+          </div>
+          <button class="remove-photo-btn" style="margin-top:8px;width:160px;" onclick="removePhoto('coach',null,'coach-photo-wrap')">✕ Quitar foto</button>
+        </div>
+        <div class="coach-fields">
+          <div class="field"><label>Nick / Alias</label><input type="text" id="coach-nick" /></div>
+          <div class="field"><label>Nombre real</label><input type="text" id="coach-name" /></div>
+        </div>
+      </div>
+
+      <!-- STARTERS -->
+      <h3 style="font-family:'Orbitron',sans-serif;font-size:.9rem;color:var(--purple-l);margin-bottom:14px;letter-spacing:2px;">TITULARES</h3>
+      <div class="player-editors" id="starters-editors"></div>
+
+      <!-- SUBS -->
+      <h3 style="font-family:'Orbitron',sans-serif;font-size:.9rem;color:var(--purple-l);margin-bottom:14px;letter-spacing:2px;">SUPLENTES</h3>
+      <div class="subs-list" id="subs-list"></div>
+      <button class="add-sub-btn" onclick="addSub()">+ Añadir suplente</button>
+    </div>
+
+    <!-- SERVIDOR PANEL -->
+    <div class="panel" id="panel-servidor">
+      <div class="panel-title">Servidor de Praccs</div>
+      <div class="panel-desc">Cambia la IP y puerto del servidor de prácticas. Se actualiza en la web al guardar.</div>
+      <div class="server-box">
+        <div class="field">
+          <label>IP y puerto (sin "connect")</label>
+          <input type="text" id="server-input" placeholder="123.456.789.0:27015"
+            oninput="document.getElementById('server-preview').textContent='connect '+this.value" />
+        </div>
+        <div class="server-preview" id="server-preview">connect —</div>
+      </div>
+    </div>
+
+    <!-- MAPAS PANEL -->
+    <div class="panel" id="panel-mapas">
+      <div class="panel-title">Jugadas por Mapa</div>
+      <div class="panel-desc">Añade o elimina jugadas con foto para cada mapa del pool activo de CS2.</div>
+      <div class="map-selector" id="map-selector"></div>
+      <div id="map-edit-panels"></div>
+    </div>
+
+    <!-- SOCIAL PANEL -->
+    <div class="panel" id="panel-social">
+      <div class="panel-title">Redes Sociales</div>
+      <div class="panel-desc">Configura los enlaces y handles de Discord y Twitch.</div>
+      <div class="social-editor">
+        <h4>Discord</h4>
+        <div class="field"><label>URL de invitación</label><input type="text" id="discord-url" placeholder="https://discord.gg/..." /></div>
+        <div class="field"><label>Texto mostrado</label><input type="text" id="discord-handle" placeholder="Únete al servidor" /></div>
+      </div>
+      <div class="social-editor">
+        <h4>Twitch</h4>
+        <div class="field"><label>URL del canal</label><input type="text" id="twitch-url" placeholder="https://twitch.tv/..." /></div>
+        <div class="field"><label>Texto mostrado</label><input type="text" id="twitch-handle" placeholder="Ver streams" /></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const MAPS = ['Mirage','Inferno','Anubis','Ancient','Nuke','Overpass','Vertigo'];
+let currentMapPhoto = {}; // map -> base64
+
+function getData() {
+  const raw = localStorage.getItem('2d2_data');
+  if (raw) return JSON.parse(raw);
+  return {
+    practiceServer:'',
+    coach:{nick:'Coach',name:'Nombre Real',photo:null},
+    starters:[
+      {nick:'Jugador 1',name:'Nombre Real',role:'IGL',photo:null},
+      {nick:'Jugador 2',name:'Nombre Real',role:'AWPer',photo:null},
+      {nick:'Jugador 3',name:'Nombre Real',role:'Rifler',photo:null},
+      {nick:'Jugador 4',name:'Nombre Real',role:'Support',photo:null},
+      {nick:'Jugador 5',name:'Nombre Real',role:'Entry',photo:null},
+    ],
+    subs:[],
+    maps:{},
+    social:{discordUrl:'',discordHandle:'Únete al servidor',twitchUrl:'',twitchHandle:'Ver streams'}
+  };
+}
+
+function saveData(d) {
+  localStorage.setItem('2d2_data', JSON.stringify(d));
+}
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(s=>{
+    if(s.textContent.toLowerCase().includes(name.substring(0,4))) s.classList.add('active');
+  });
+}
+
+function fileToBase64(file) {
+  return new Promise(res=>{
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result);
+    r.readAsDataURL(file);
+  });
+}
+
+async function handlePhoto(input, type, index, wrapId) {
+  const file = input.files[0];
+  if (!file) return;
+  const b64 = await fileToBase64(file);
+  const d = getData();
+  if (type==='coach') { d.coach.photo=b64; }
+  else if (type==='starter') { d.starters[index].photo=b64; }
+  else if (type==='sub') { d.subs[index].photo=b64; }
+  saveData(d);
+  updatePhotoWrap(wrapId, b64);
+  input.value='';
+}
+
+function updatePhotoWrap(wrapId, b64) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  let img = wrap.querySelector('img');
+  if (!img) { img=document.createElement('img'); wrap.appendChild(img); }
+  img.src = b64;
+  wrap.querySelector('.upload-icon') && (wrap.querySelector('.upload-icon').style.display='none');
+  wrap.querySelector('.upload-label') && (wrap.querySelector('.upload-label').style.display='none');
+}
+
+function removePhoto(type, index, wrapId) {
+  const d = getData();
+  if (type==='coach') { d.coach.photo=null; }
+  else if (type==='starter') { d.starters[index].photo=null; }
+  else if (type==='sub') { d.subs[index].photo=null; }
+  saveData(d);
+  const wrap = document.getElementById(wrapId);
+  if (wrap) {
+    const img=wrap.querySelector('img');
+    if(img) img.remove();
+    wrap.querySelector('.upload-icon') && (wrap.querySelector('.upload-icon').style.display='');
+    wrap.querySelector('.upload-label') && (wrap.querySelector('.upload-label').style.display='');
+  }
+}
+
+function renderStartersEditors() {
+  const d = getData();
+  const container = document.getElementById('starters-editors');
+  container.innerHTML = '';
+  d.starters.forEach((p,i)=>{
+    const div = document.createElement('div');
+    div.className='player-editor';
+    div.innerHTML=`
+      <div class="player-editor-header">Titular #${i+1}</div>
+      <div class="photo-upload-area" id="starter-wrap-${i}" onclick="document.getElementById('starter-file-${i}').click()">
+        ${p.photo?`<img src="${p.photo}" />`:''}
+        <span class="upload-icon" ${p.photo?'style="display:none"':''}>📷</span>
+        <span class="upload-label" ${p.photo?'style="display:none"':''}>Subir foto</span>
+        <input type="file" id="starter-file-${i}" accept="image/*"
+          onchange="handlePhoto(this,'starter',${i},'starter-wrap-${i}')" />
+      </div>
+      <button class="remove-photo-btn" onclick="removePhoto('starter',${i},'starter-wrap-${i}')">✕ Quitar foto</button>
+      <div class="field"><label>Nick</label><input type="text" id="starter-nick-${i}" value="${p.nick}" /></div>
+      <div class="field"><label>Nombre real</label><input type="text" id="starter-name-${i}" value="${p.name}" /></div>
+      <div class="field"><label>Rol</label><input type="text" id="starter-role-${i}" value="${p.role}" placeholder="IGL, AWP, Rifler..." /></div>`;
+    container.appendChild(div);
+  });
+}
+
+function renderCoach() {
+  const d = getData();
+  document.getElementById('coach-nick').value = d.coach.nick;
+  document.getElementById('coach-name').value = d.coach.name;
+  if (d.coach.photo) updatePhotoWrap('coach-photo-wrap', d.coach.photo);
+}
+
+function renderSubs() {
+  const d = getData();
+  const list = document.getElementById('subs-list');
+  list.innerHTML='';
+  (d.subs||[]).forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.className='sub-editor';
+    div.innerHTML=`
+      <div class="sub-photo-upload" id="sub-wrap-${i}" onclick="document.getElementById('sub-file-${i}').click()">
+        ${p.photo?`<img src="${p.photo}"/>`:'📷'}
+        <input type="file" id="sub-file-${i}" accept="image/*"
+          onchange="handlePhoto(this,'sub',${i},'sub-wrap-${i}')" />
+      </div>
+      <div class="sub-fields">
+        <input type="text" id="sub-nick-${i}" value="${p.nick}" placeholder="Nick" />
+        <input type="text" id="sub-role-${i}" value="${p.role}" placeholder="Rol" />
+        <input type="text" id="sub-name-${i}" value="${p.name||''}" placeholder="Nombre real" style="grid-column:span 2" />
+      </div>
+      <button class="del-sub-btn" onclick="deleteSub(${i})">✕</button>`;
+    list.appendChild(div);
+  });
+}
+
+function addSub() {
+  const d=getData();
+  d.subs.push({nick:'Suplente',name:'Nombre Real',role:'Rifler',photo:null});
+  saveData(d);
+  renderSubs();
+}
+
+function deleteSub(i) {
+  const d=getData();
+  d.subs.splice(i,1);
+  saveData(d);
+  renderSubs();
+}
+
+function renderServer() {
+  const d=getData();
+  document.getElementById('server-input').value=d.practiceServer||'';
+  document.getElementById('server-preview').textContent='connect '+(d.practiceServer||'—');
+}
+
+function renderMaps() {
+  const d=getData();
+  const selEl=document.getElementById('map-selector');
+  const panelsEl=document.getElementById('map-edit-panels');
+  selEl.innerHTML=''; panelsEl.innerHTML='';
+  MAPS.forEach((map,i)=>{
+    const btn=document.createElement('button');
+    btn.className='map-sel-btn'+(i===0?' active':'');
+    btn.textContent=map;
+    btn.onclick=()=>{
+      document.querySelectorAll('.map-sel-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.map-edit-panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('mep-'+map).classList.add('active');
+    };
+    selEl.appendChild(btn);
+
+    const plays=(d.maps&&d.maps[map])?d.maps[map]:[];
+    const panel=document.createElement('div');
+    panel.className='map-edit-panel'+(i===0?' active':'');
+    panel.id='mep-'+map;
+    panel.innerHTML=`
+      <div class="plays-admin-grid" id="plays-grid-${map}">
+        ${plays.length===0
+          ?`<div class="no-plays-admin"><span>🗺️</span>Sin jugadas aún. Añade la primera abajo.</div>`
+          :plays.map((pl,pi)=>`
+            <div class="play-admin-card">
+              <div class="play-admin-img">${pl.photo?`<img src="${pl.photo}"/>`:'📸'}</div>
+              <div class="play-admin-body">
+                <div class="play-admin-title">${pl.title}</div>
+                ${pl.desc?`<div class="play-admin-desc">${pl.desc}</div>`:''}
+                <button class="del-play-btn" onclick="deletePlay('${map}',${pi})">✕ Eliminar jugada</button>
+              </div>
+            </div>`).join('')}
+      </div>
+      <div class="add-play-form">
+        <h4>+ Añadir jugada en ${map}</h4>
+        <div class="add-play-photo" id="new-play-wrap-${map}" onclick="document.getElementById('new-play-file-${map}').click()">
+          <span class="upload-icon">📷</span>
+          <span class="upload-label">Haz clic para subir foto</span>
+          <input type="file" id="new-play-file-${map}" accept="image/*"
+            onchange="handleNewPlayPhoto(this,'${map}')" />
+        </div>
+        <div class="field"><label>Título de la jugada</label>
+          <input type="text" id="new-play-title-${map}" placeholder="Ej: Rush A site con flash" /></div>
+        <div class="field"><label>Descripción (opcional)</label>
+          <textarea id="new-play-desc-${map}" placeholder="Descripción de la jugada..."></textarea></div>
+        <button class="add-play-btn" onclick="addPlay('${map}')">+ Guardar jugada</button>
+      </div>`;
+    panelsEl.appendChild(panel);
+  });
+}
+
+async function handleNewPlayPhoto(input, map) {
+  const file=input.files[0];
+  if(!file) return;
+  const b64=await fileToBase64(file);
+  currentMapPhoto[map]=b64;
+  const wrap=document.getElementById('new-play-wrap-'+map);
+  let img=wrap.querySelector('img');
+  if(!img){img=document.createElement('img');wrap.appendChild(img);}
+  img.src=b64;
+  wrap.querySelector('.upload-icon').style.display='none';
+  wrap.querySelector('.upload-label').style.display='none';
+  input.value='';
+}
+
+function addPlay(map) {
+  const title=document.getElementById('new-play-title-'+map).value.trim();
+  if(!title){alert('Escribe un título para la jugada.');return;}
+  const desc=document.getElementById('new-play-desc-'+map).value.trim();
+  const photo=currentMapPhoto[map]||null;
+  const d=getData();
+  if(!d.maps) d.maps={};
+  if(!d.maps[map]) d.maps[map]=[];
+  d.maps[map].push({id:Date.now(),title,desc,photo});
+  saveData(d);
+  currentMapPhoto[map]=null;
+  renderMaps();
+  // reactivate current map
+  document.querySelectorAll('.map-sel-btn').forEach((b,i)=>{
+    if(b.textContent===map){b.click();}
+  });
+  showToast();
+}
+
+function deletePlay(map, index) {
+  if(!confirm('¿Eliminar esta jugada?')) return;
+  const d=getData();
+  d.maps[map].splice(index,1);
+  saveData(d);
+  renderMaps();
+  document.querySelectorAll('.map-sel-btn').forEach(b=>{
+    if(b.textContent===map) b.click();
+  });
+  showToast();
+}
+
+function renderSocial() {
+  const d=getData();
+  const s=d.social||{};
+  document.getElementById('discord-url').value=s.discordUrl||'';
+  document.getElementById('discord-handle').value=s.discordHandle||'Únete al servidor';
+  document.getElementById('twitch-url').value=s.twitchUrl||'';
+  document.getElementById('twitch-handle').value=s.twitchHandle||'Ver streams';
+}
+
+function saveAll() {
+  const d=getData();
+
+  // Coach
+  d.coach.nick=document.getElementById('coach-nick').value||d.coach.nick;
+  d.coach.name=document.getElementById('coach-name').value||d.coach.name;
+
+  // Starters
+  d.starters.forEach((p,i)=>{
+    p.nick=document.getElementById('starter-nick-'+i)?.value||p.nick;
+    p.name=document.getElementById('starter-name-'+i)?.value||p.name;
+    p.role=document.getElementById('starter-role-'+i)?.value||p.role;
+  });
+
+  // Subs
+  (d.subs||[]).forEach((p,i)=>{
+    p.nick=document.getElementById('sub-nick-'+i)?.value||p.nick;
+    p.name=document.getElementById('sub-name-'+i)?.value||p.name;
+    p.role=document.getElementById('sub-role-'+i)?.value||p.role;
+  });
+
+  // Server
+  d.practiceServer=document.getElementById('server-input').value.trim();
+
+  // Social
+  d.social={
+    discordUrl:document.getElementById('discord-url').value.trim(),
+    discordHandle:document.getElementById('discord-handle').value.trim()||'Únete al servidor',
+    twitchUrl:document.getElementById('twitch-url').value.trim(),
+    twitchHandle:document.getElementById('twitch-handle').value.trim()||'Ver streams',
+  };
+
+  saveData(d);
+  showToast();
+}
+
+function showToast() {
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// Init
+renderCoach();
+renderStartersEditors();
+renderSubs();
+renderServer();
+renderMaps();
+renderSocial();
+</script>
+</body>
+</html>

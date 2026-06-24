@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D2 Esports</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:#3B82F6; --purple:#8B5CF6;
+      --blue-l:#60A5FA; --purple-l:#A78BFA;
+      --bg:#050508; --bg2:#0A0A0F; --bg3:#0F0F1A;
+      --border:rgba(139,92,246,0.2); --text:#E2E8F0; --muted:#94A3B8;
+    }
+    html { scroll-behavior:smooth; }
+    body { background:var(--bg); color:var(--text); font-family:'Rajdhani',sans-serif; overflow-x:hidden; }
+    ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-thumb{background:var(--purple)}
+
+    /* NAV */
+    nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center;
+      justify-content:space-between; padding:0 40px; height:65px;
+      background:rgba(5,5,8,.92); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); }
+    .nav-logo { display:flex; align-items:center; gap:12px; text-decoration:none; }
+    .nav-logo-img { width:38px; height:38px; border-radius:50%; overflow:hidden;
+      border:2px solid var(--purple); flex-shrink:0; }
+    .nav-logo-img img { width:100%; height:100%; object-fit:cover; display:block; }
+    .nav-brand { font-family:'Orbitron',sans-serif; font-size:.95rem; font-weight:700;
+      background:linear-gradient(90deg,var(--blue-l),var(--purple-l));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .nav-links { display:flex; gap:24px; list-style:none; }
+    .nav-links a { color:var(--muted); text-decoration:none; font-size:.85rem; font-weight:600;
+      letter-spacing:1px; text-transform:uppercase; transition:color .2s; }
+    .nav-links a:hover { color:var(--blue-l); }
+    .nav-right { display:flex; align-items:center; gap:12px; }
+    .nav-social { color:var(--muted); transition:color .2s; display:flex; }
+    .nav-social:hover { color:var(--purple-l); }
+    .nav-social svg { width:17px; height:17px; fill:currentColor; }
+
+    /* ADMIN BUTTON */
+    .admin-btn { font-size:.65rem; letter-spacing:1px; color:var(--purple-l); text-decoration:none;
+      font-weight:700; text-transform:uppercase; padding:6px 14px;
+      border:1px solid var(--purple); border-radius:4px; transition:all .2s;
+      background:rgba(139,92,246,.1); cursor:pointer; }
+    .admin-btn:hover { background:rgba(139,92,246,.25); box-shadow:0 0 14px rgba(139,92,246,.3); }
+
+    /* MODAL */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75);
+      backdrop-filter:blur(8px); z-index:999; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:var(--bg3); border:1px solid var(--purple); border-radius:12px;
+      padding:40px 36px; width:360px; text-align:center;
+      box-shadow:0 0 60px rgba(139,92,246,.3); }
+    .modal-logo { width:70px; height:70px; border-radius:50%; overflow:hidden; margin:0 auto 20px; }
+    .modal-logo img { width:100%; height:100%; object-fit:cover; }
+    .modal-title { font-family:'Orbitron',sans-serif; font-size:1.1rem; font-weight:900;
+      color:#fff; margin-bottom:6px; }
+    .modal-sub { font-size:.82rem; color:var(--muted); margin-bottom:24px; }
+    .modal-input { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:6px;
+      padding:12px 16px; color:#fff; font-family:'Rajdhani',sans-serif; font-size:1rem;
+      letter-spacing:2px; outline:none; transition:border-color .2s; text-align:center; }
+    .modal-input:focus { border-color:var(--purple); }
+    .modal-error { color:#f87171; font-size:.8rem; margin-top:8px; min-height:18px; }
+    .modal-actions { display:flex; gap:10px; margin-top:20px; }
+    .modal-cancel { flex:1; padding:11px; border:1px solid var(--border); border-radius:4px;
+      background:transparent; color:var(--muted); cursor:pointer; font-family:'Rajdhani',sans-serif;
+      font-size:.9rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; transition:all .2s; }
+    .modal-cancel:hover { border-color:var(--muted); color:var(--text); }
+    .modal-ok { flex:1; padding:11px; border:none; border-radius:4px;
+      background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; cursor:pointer;
+      font-family:'Rajdhani',sans-serif; font-size:.9rem; font-weight:700; letter-spacing:1px;
+      text-transform:uppercase; transition:all .2s; }
+    .modal-ok:hover { box-shadow:0 4px 16px rgba(139,92,246,.5); }
+
+    /* HERO */
+    .hero { min-height:100vh; display:flex; flex-direction:column; align-items:center;
+      justify-content:center; text-align:center; padding:90px 20px 60px;
+      position:relative; overflow:hidden; }
+    .hero::before { content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(139,92,246,.18) 0%,transparent 70%),
+                  radial-gradient(ellipse 40% 30% at 20% 70%,rgba(59,130,246,.1) 0%,transparent 60%); }
+    .hero-grid { position:absolute; inset:0;
+      background-image:linear-gradient(rgba(139,92,246,.05) 1px,transparent 1px),
+                       linear-gradient(90deg,rgba(139,92,246,.05) 1px,transparent 1px);
+      background-size:60px 60px; }
+    .hero-logo { position:relative; width:150px; height:150px; border-radius:50%; margin-bottom:28px;
+      border:3px solid transparent;
+      background:linear-gradient(var(--bg),var(--bg)) padding-box,
+                 linear-gradient(135deg,var(--blue),var(--purple)) border-box;
+      box-shadow:0 0 60px rgba(139,92,246,.4),0 0 120px rgba(59,130,246,.15);
+      overflow:hidden; }
+    .hero-logo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .hero-tag { position:relative; font-size:.72rem; font-weight:700; letter-spacing:4px;
+      text-transform:uppercase; color:var(--blue-l); margin-bottom:14px;
+      border:1px solid rgba(96,165,250,.3); padding:3px 14px; border-radius:2px; display:inline-block; }
+    .hero-h1 { position:relative; font-family:'Orbitron',sans-serif; font-size:clamp(3rem,9vw,6.5rem);
+      font-weight:900; line-height:1; margin-bottom:6px;
+      background:linear-gradient(135deg,#fff 30%,var(--purple-l) 65%,var(--blue-l));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .hero-sub { position:relative; font-family:'Orbitron',sans-serif; font-size:clamp(.9rem,2.5vw,1.4rem);
+      font-weight:700; color:var(--purple-l); letter-spacing:6px; margin-bottom:36px; }
+    .hero-stats { position:relative; display:flex; gap:48px; justify-content:center; margin-bottom:40px; }
+    .stat-num { font-family:'Orbitron',sans-serif; font-size:2rem; font-weight:900;
+      background:linear-gradient(135deg,var(--blue-l),var(--purple-l));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-label { font-size:.72rem; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+    .hero-btns { position:relative; display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 28px; border-radius:4px;
+      font-family:'Rajdhani',sans-serif; font-size:.92rem; font-weight:700; letter-spacing:2px;
+      text-transform:uppercase; text-decoration:none; cursor:pointer; border:none; transition:all .3s; }
+    .btn-primary { background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff;
+      box-shadow:0 4px 20px rgba(139,92,246,.35); }
+    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(139,92,246,.55); }
+    .btn-outline { background:transparent; color:var(--text); border:1px solid var(--border); }
+    .btn-outline:hover { border-color:var(--purple); color:var(--purple-l); background:rgba(139,92,246,.08); }
+
+    /* SECTIONS */
+    .sw { padding:90px 40px; }
+    .sw.dark { background:var(--bg2); }
+    .inner { max-width:1200px; margin:0 auto; }
+    .s-label { font-size:.68rem; font-weight:700; letter-spacing:4px; text-transform:uppercase;
+      color:var(--blue-l); margin-bottom:10px; }
+    .s-title { font-family:'Orbitron',sans-serif; font-size:clamp(1.6rem,4vw,2.4rem);
+      font-weight:900; color:#fff; margin-bottom:12px; }
+    .s-title span { background:linear-gradient(135deg,var(--blue-l),var(--purple-l));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .s-desc { font-size:1rem; color:var(--muted); max-width:520px; line-height:1.7; margin-bottom:48px; }
+    .glow-bar { width:70px; height:3px; background:linear-gradient(90deg,var(--blue),var(--purple));
+      border-radius:2px; margin-bottom:44px; }
+    .divider { height:1px; background:linear-gradient(90deg,transparent,var(--purple),transparent); opacity:.3; }
+
+    /* SERVER */
+    .connect-box { background:var(--bg3); border:1px solid var(--purple); border-radius:10px;
+      padding:26px 30px; display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+      box-shadow:0 0 40px rgba(139,92,246,.12); }
+    .connect-icon { font-size:2rem; flex-shrink:0; }
+    .connect-info { flex:1; min-width:180px; }
+    .connect-lbl { font-size:.62rem; font-weight:700; letter-spacing:3px; text-transform:uppercase;
+      color:var(--purple-l); margin-bottom:6px; }
+    .connect-str { font-family:'Orbitron',sans-serif; font-size:1.05rem; font-weight:700;
+      color:#fff; word-break:break-all; }
+    .connect-str .kw { color:var(--blue-l); }
+
+    /* TEAM */
+    .coach-wrap { display:flex; justify-content:center; margin-bottom:48px; }
+    .coach-card { background:var(--bg3); border:2px solid var(--purple); border-radius:12px;
+      overflow:hidden; width:240px; text-align:center;
+      box-shadow:0 0 50px rgba(139,92,246,.2); transition:transform .3s; }
+    .coach-card:hover { transform:translateY(-6px); }
+    .coach-photo { width:100%; height:210px; background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.15));
+      display:flex; align-items:center; justify-content:center;
+      font-size:.6rem; font-weight:700; letter-spacing:2px; color:rgba(255,255,255,.18); overflow:hidden; }
+    .coach-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .coach-body { padding:16px 14px; }
+    .coach-role-tag { font-size:.6rem; font-weight:700; letter-spacing:3px; text-transform:uppercase;
+      color:var(--purple-l); margin-bottom:4px; }
+    .coach-nick { font-family:'Orbitron',sans-serif; font-size:1.05rem; font-weight:900; color:#fff; }
+    .coach-name { font-size:.8rem; color:var(--muted); margin-top:3px; }
+
+    .starters-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:36px; }
+    .player-card { background:var(--bg3); border:1px solid var(--border); border-radius:10px;
+      overflow:hidden; transition:all .3s; }
+    .player-card:hover { transform:translateY(-5px); border-color:var(--purple);
+      box-shadow:0 10px 30px rgba(139,92,246,.2); }
+    .player-photo { width:100%; aspect-ratio:1; overflow:hidden;
+      background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(139,92,246,.1));
+      display:flex; align-items:center; justify-content:center;
+      font-size:.55rem; font-weight:700; color:rgba(255,255,255,.15); }
+    .player-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .player-body { padding:12px 13px; }
+    .player-role { font-size:.56rem; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+      color:var(--purple-l); margin-bottom:3px; }
+    .player-nick { font-family:'Orbitron',sans-serif; font-size:.8rem; font-weight:700; color:#fff; }
+    .player-name { font-size:.7rem; color:var(--muted); margin-top:2px; }
+
+    .subs-lbl { font-size:.62rem; font-weight:700; letter-spacing:3px; text-transform:uppercase;
+      color:var(--muted); margin-bottom:14px; }
+    .subs-grid { display:flex; gap:12px; flex-wrap:wrap; }
+    .sub-card { background:var(--bg3); border:1px solid var(--border); border-radius:8px;
+      display:flex; align-items:center; gap:11px; padding:10px 14px; transition:all .3s; }
+    .sub-card:hover { border-color:rgba(139,92,246,.4); }
+    .sub-photo { width:40px; height:40px; border-radius:50%; flex-shrink:0; overflow:hidden;
+      background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.15));
+      display:flex; align-items:center; justify-content:center; font-size:.4rem; color:rgba(255,255,255,.15); }
+    .sub-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+    .sub-nick { font-family:'Orbitron',sans-serif; font-size:.7rem; font-weight:700; color:#fff; }
+    .sub-role { font-size:.62rem; color:var(--muted); }
+
+    /* MAPS */
+    .map-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:28px; }
+    .map-tab { padding:7px 18px; border-radius:4px; border:1px solid var(--border);
+      background:transparent; color:var(--muted); cursor:pointer;
+      font-family:'Rajdhani',sans-serif; font-size:.82rem; font-weight:700;
+      letter-spacing:1px; text-transform:uppercase; transition:all .2s; }
+    .map-tab:hover,.map-tab.active { border-color:var(--purple); color:var(--purple-l); background:rgba(139,92,246,.1); }
+    .map-panel { display:none; }
+    .map-panel.active { display:block; }
+    .plays-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:18px; }
+    .play-card { background:var(--bg3); border:1px solid var(--border); border-radius:10px;
+      overflow:hidden; transition:all .3s; }
+    .play-card:hover { border-color:rgba(139,92,246,.4); transform:translateY(-4px);
+      box-shadow:0 10px 28px rgba(139,92,246,.15); }
+    .play-img { width:100%; height:190px; overflow:hidden;
+      background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08));
+      display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
+    .play-img img { width:100%; height:100%; object-fit:cover; display:block; }
+    .play-body { padding:14px 16px; }
+    .play-title { font-family:'Orbitron',sans-serif; font-size:.8rem; font-weight:700; color:#fff; margin-bottom:5px; }
+    .play-desc { font-size:.8rem; color:var(--muted); line-height:1.5; }
+    .no-plays { padding:60px 20px; text-align:center; color:var(--muted); }
+    .no-plays span { font-size:2.5rem; display:block; margin-bottom:10px; }
+
+    /* SOCIAL */
+    .social-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
+    .social-card { display:flex; align-items:center; gap:14px; background:var(--bg3);
+      border:1px solid var(--border); border-radius:8px; padding:18px; text-decoration:none; transition:all .3s; }
+    .social-card:hover { transform:translateY(-4px); border-color:var(--purple); box-shadow:0 8px 24px rgba(139,92,246,.18); }
+    .s-icon { width:42px; height:42px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .s-icon svg { width:21px; height:21px; }
+    .s-name { font-family:'Orbitron',sans-serif; font-size:.78rem; font-weight:700; color:#fff; }
+    .s-handle { font-size:.78rem; color:var(--muted); margin-top:2px; }
+
+    footer { text-align:center; padding:32px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:.8rem; }
+    footer a { color:var(--purple-l); text-decoration:none; }
+
+    @media(max-width:960px) { .starters-grid { grid-template-columns:repeat(3,1fr); } }
+    @media(max-width:768px) { nav{padding:0 16px;} .nav-links{display:none;} .sw{padding:70px 20px;} .hero-stats{gap:24px;} }
+    @media(max-width:560px) { .starters-grid{grid-template-columns:repeat(2,1fr);} }
+  </style>
+</head>
+<body>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal-box">
+    <div class="modal-logo"><img src="imagenes/2d2.jpg" alt="2D2" /></div>
+    <div class="modal-title">Panel Admin</div>
+    <div class="modal-sub">Introduce la contraseña para acceder</div>
+    <input class="modal-input" type="password" id="adminPass" placeholder="••••••••••"
+      onkeydown="if(event.key==='Enter') checkPass()" />
+    <div class="modal-error" id="passError"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-ok" onclick="checkPass()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#inicio" class="nav-logo">
+    <div class="nav-logo-img"><img src="imagenes/2d2.jpg" alt="2D2" /></div>
+    <span class="nav-brand">2D2 ESPORTS</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#inicio">Inicio</a></li>
+    <li><a href="#equipo">Equipo</a></li>
+    <li><a href="#servidor">Servidor</a></li>
+    <li><a href="#mapas">Mapas</a></li>
+    <li><a href="#social">Redes</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="https://instagram.com/2d2esports" target="_blank" class="nav-social">
+      <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+    </a>
+    <a href="#" class="nav-social" id="nav-discord">
+      <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+    </a>
+    <button class="admin-btn" onclick="openModal()">⚙️ Admin</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div id="inicio" style="position:relative;overflow:hidden;">
+  <div class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-logo"><img src="imagenes/2d2.jpg" alt="2D2 Esports" /></div>
+    <div class="hero-tag">Counter-Strike 2</div>
+    <h1 class="hero-h1">2D2</h1>
+    <div class="hero-sub">ESPORTS</div>
+    <div class="hero-stats">
+      <div><div class="stat-num">3</div><div class="stat-label">Faceit Wins</div></div>
+      <div><div class="stat-num">668</div><div class="stat-label">Seguidores</div></div>
+      <div><div class="stat-num">CS2</div><div class="stat-label">Juego</div></div>
+    </div>
+    <div class="hero-btns">
+      <a href="#equipo" class="btn btn-primary">Ver equipo</a>
+      <a href="#servidor" class="btn btn-outline">Servidor praccs</a>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SERVIDOR -->
+<div class="sw dark" id="servidor">
+  <div class="inner">
+    <div class="s-label">Práctica</div>
+    <h2 class="s-title">Servidor de <span>Praccs</span></h2>
+    <p class="s-desc">Conéctate al servidor de entrenamientos del equipo. Solo miembros autorizados.</p>
+    <div class="glow-bar"></div>
+    <div class="connect-box">
+      <div class="connect-icon">🖥️</div>
+      <div class="connect-info">
+        <div class="connect-lbl">Comando de conexión CS2</div>
+        <div class="connect-str"><span class="kw">connect</span> <span id="connect-ip">pendiente de configurar</span></div>
+      </div>
+      <button class="btn btn-primary" onclick="copyConnect()" id="copy-btn">📋 Copiar</button>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- EQUIPO -->
+<div class="sw" id="equipo">
+  <div class="inner">
+    <div class="s-label">Roster</div>
+    <h2 class="s-title">Nuestro <span>Equipo</span></h2>
+    <p class="s-desc">Los jugadores que representan a 2D2 Esports en la escena competitiva de CS2.</p>
+    <div class="glow-bar"></div>
+    <div class="coach-wrap" id="coach-wrap"></div>
+    <div class="starters-grid" id="starters-grid"></div>
+    <div id="subs-section" style="display:none;">
+      <div class="subs-lbl">— Suplentes —</div>
+      <div class="subs-grid" id="subs-grid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- MAPAS -->
+<div class="sw dark" id="mapas">
+  <div class="inner">
+    <div class="s-label">Estrategia</div>
+    <h2 class="s-title">Jugadas por <span>Mapa</span></h2>
+    <p class="s-desc">Desglose de jugadas y setups por mapa. Contenido actualizado por el staff de 2D2.</p>
+    <div class="glow-bar"></div>
+    <div class="map-tabs" id="map-tabs"></div>
+    <div id="map-panels"></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SOCIAL -->
+<div class="sw" id="social">
+  <div class="inner">
+    <div class="s-label">Síguenos</div>
+    <h2 class="s-title">Redes <span>Sociales</span></h2>
+    <p class="s-desc">Sigue a 2D2 Esports para estar al día de torneos, resultados y streams.</p>
+    <div class="glow-bar"></div>
+    <div class="social-grid">
+      <a href="https://instagram.com/2d2esports" target="_blank" class="social-card">
+        <div class="s-icon" style="background:linear-gradient(135deg,#E1306C,#833AB4);">
+          <svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        </div>
+        <div><div class="s-name">Instagram</div><div class="s-handle">@2d2esports</div></div>
+      </a>
+      <a href="#" target="_blank" class="social-card" id="dc-card">
+        <div class="s-icon" style="background:#5865F2;">
+          <svg viewBox="0 0 24 24" fill="white"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        </div>
+        <div><div class="s-name">Discord</div><div class="s-handle" id="dc-handle">Únete al servidor</div></div>
+      </a>
+      <a href="#" target="_blank" class="social-card" id="tw-card">
+        <div class="s-icon" style="background:#9146FF;">
+          <svg viewBox="0 0 24 24" fill="white"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+        </div>
+        <div><div class="s-name">Twitch</div><div class="s-handle" id="tw-handle">Ver streams</div></div>
+      </a>
+      <a href="https://tiktok.com/@2d2esports" target="_blank" class="social-card">
+        <div class="s-icon" style="background:#000;border:1px solid rgba(255,255,255,.1);">
+          <svg viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
+        </div>
+        <div><div class="s-name">TikTok</div><div class="s-handle">@2d2esports</div></div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 <a href="#">2D2 Esports</a> &nbsp;·&nbsp; Counter-Strike 2</p>
+</footer>
+
+<script>
+const MAPS = ['Mirage','Inferno','Anubis','Ancient','Nuke','Overpass','Vertigo'];
+const PASS = '2d2ontop';
+
+function getData() {
+  const raw = localStorage.getItem('2d2_data');
+  if (raw) return JSON.parse(raw);
+  return {
+    practiceServer: '',
+    coach: { nick:'Coach', name:'Nombre Real', photo:null },
+    starters: [
+      {nick:'Jugador 1',name:'Nombre Real',role:'IGL',photo:null},
+      {nick:'Jugador 2',name:'Nombre Real',role:'AWPer',photo:null},
+      {nick:'Jugador 3',name:'Nombre Real',role:'Rifler',photo:null},
+      {nick:'Jugador 4',name:'Nombre Real',role:'Support',photo:null},
+      {nick:'Jugador 5',name:'Nombre Real',role:'Entry',photo:null},
+    ],
+    subs: [],
+    maps: {},
+    social: { discordUrl:'', discordHandle:'Únete al servidor', twitchUrl:'', twitchHandle:'Ver streams' }
+  };
+}
+
+function ph(photo, label) {
+  return photo ? `<img src="${photo}" alt="${label}" />` : `<span>${label}</span>`;
+}
+
+function render() {
+  const d = getData();
+  document.getElementById('connect-ip').textContent = d.practiceServer || 'pendiente de configurar';
+
+  document.getElementById('coach-wrap').innerHTML = `
+    <div class="coach-card">
+      <div class="coach-photo">${ph(d.coach.photo,'COACH')}</div>
+      <div class="coach-body">
+        <div class="coach-role-tag">Entrenador</div>
+        <div class="coach-nick">${d.coach.nick}</div>
+        <div class="coach-name">${d.coach.name}</div>
+      </div>
+    </div>`;
+
+  document.getElementById('starters-grid').innerHTML = d.starters.map(p=>`
+    <div class="player-card">
+      <div class="player-photo">${ph(p.photo,p.nick)}</div>
+      <div class="player-body">
+        <div class="player-role">${p.role}</div>
+        <div class="player-nick">${p.nick}</div>
+        <div class="player-name">${p.name}</div>
+      </div>
+    </div>`).join('');
+
+  const subsEl = document.getElementById('subs-section');
+  if (d.subs && d.subs.length > 0) {
+    subsEl.style.display='';
+    document.getElementById('subs-grid').innerHTML = d.subs.map(p=>`
+      <div class="sub-card">
+        <div class="sub-photo">${ph(p.photo,'')}</div>
+        <div><div class="sub-nick">${p.nick}</div><div class="sub-role">${p.role}</div></div>
+      </div>`).join('');
+  } else { subsEl.style.display='none'; }
+
+  const tabsEl=document.getElementById('map-tabs'), panelsEl=document.getElementById('map-panels');
+  tabsEl.innerHTML=''; panelsEl.innerHTML='';
+  MAPS.forEach((map,i)=>{
+    const plays=(d.maps&&d.maps[map])?d.maps[map]:[];
+    const tab=document.createElement('button');
+    tab.className='map-tab'+(i===0?' active':'');
+    tab.textContent=map;
+    tab.onclick=()=>{
+      document.querySelectorAll('.map-tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.map-panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('mp-'+map).classList.add('active');
+    };
+    tabsEl.appendChild(tab);
+    const panel=document.createElement('div');
+    panel.className='map-panel'+(i===0?' active':'');
+    panel.id='mp-'+map;
+    panel.innerHTML=!plays.length
+      ?`<div class="no-plays"><span>🗺️</span>No hay jugadas registradas para ${map} todavía.</div>`
+      :`<div class="plays-grid">${plays.map(pl=>`
+          <div class="play-card">
+            <div class="play-img">${pl.photo?`<img src="${pl.photo}"/>`:'📸'}</div>
+            <div class="play-body">
+              <div class="play-title">${pl.title}</div>
+              ${pl.desc?`<div class="play-desc">${pl.desc}</div>`:''}
+            </div>
+          </div>`).join('')}</div>`;
+    panelsEl.appendChild(panel);
+  });
+
+  const s=d.social||{};
+  if(s.discordUrl){document.getElementById('dc-card').href=s.discordUrl;document.getElementById('nav-discord').href=s.discordUrl;}
+  if(s.discordHandle)document.getElementById('dc-handle').textContent=s.discordHandle;
+  if(s.twitchUrl)document.getElementById('tw-card').href=s.twitchUrl;
+  if(s.twitchHandle)document.getElementById('tw-handle').textContent=s.twitchHandle;
+}
+
+function copyConnect() {
+  const d=getData();
+  navigator.clipboard.writeText('connect '+(d.practiceServer||'')).then(()=>{
+    const btn=document.getElementById('copy-btn');
+    btn.textContent='✅ Copiado';
+    setTimeout(()=>{btn.textContent='📋 Copiar';},2000);
+  });
+}
+
+function openModal() {
+  document.getElementById('adminModal').classList.add('open');
+  document.getElementById('adminPass').value='';
+  document.getElementById('passError').textContent='';
+  setTimeout(()=>document.getElementById('adminPass').focus(),100);
+}
+
+function closeModal() {
+  document.getElementById('adminModal').classList.remove('open');
+}
+
+function checkPass() {
+  const val=document.getElementById('adminPass').value;
+  if(val===PASS) {
+    closeModal();
+    window.location.href='admin.html';
+  } else {
+    document.getElementById('passError').textContent='Contraseña incorrecta';
+    document.getElementById('adminPass').value='';
+    document.getElementById('adminPass').focus();
+  }
+}
+
+document.getElementById('adminModal').addEventListener('click',function(e){
+  if(e.target===this) closeModal();
+});
+
+render();
+</script>
+</body>
+</html>
