@@ -202,8 +202,25 @@
       box-shadow:0 10px 28px rgba(139,92,246,.15); }
     .play-img { width:100%; height:190px; overflow:hidden;
       background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08));
-      display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
-    .play-img img { width:100%; height:100%; object-fit:cover; display:block; }
+      display:flex; align-items:center; justify-content:center; font-size:2.5rem;
+      cursor:pointer; }
+    .play-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s; }
+    .play-img:hover img { transform:scale(1.04); }
+
+    /* LIGHTBOX */
+    .lightbox { display:none; position:fixed; inset:0; z-index:500;
+      background:rgba(0,0,0,.92); backdrop-filter:blur(10px);
+      align-items:center; justify-content:center; flex-direction:column; gap:16px; }
+    .lightbox.open { display:flex; }
+    .lightbox-img { max-width:92vw; max-height:82vh; object-fit:contain; border-radius:8px;
+      border:1px solid var(--border); box-shadow:0 0 80px rgba(139,92,246,.25); }
+    .lightbox-title { font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700;
+      color:#fff; letter-spacing:2px; }
+    .lightbox-close { position:fixed; top:20px; right:24px; width:42px; height:42px;
+      background:rgba(255,255,255,.08); border:1px solid var(--border); border-radius:50%;
+      color:#fff; font-size:1.3rem; cursor:pointer; display:flex; align-items:center;
+      justify-content:center; transition:all .2s; }
+    .lightbox-close:hover { background:rgba(139,92,246,.3); border-color:var(--purple); }
     .play-body { padding:14px 16px; }
     .play-title { font-family:'Orbitron',sans-serif; font-size:.8rem; font-weight:700; color:#fff; margin-bottom:5px; }
     .play-desc { font-size:.8rem; color:var(--muted); line-height:1.5; }
@@ -229,6 +246,13 @@
   </style>
 </head>
 <body>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img class="lightbox-img" id="lightbox-img" src="" alt="" />
+  <div class="lightbox-title" id="lightbox-title"></div>
+</div>
 
 <!-- PASSWORD MODAL -->
 <div class="modal-overlay" id="adminModal">
@@ -480,7 +504,7 @@ function render() {
       ?`<div class="no-plays"><span>🗺️</span>No hay jugadas registradas para ${map} todavía.</div>`
       :`<div class="plays-grid">${plays.map(pl=>`
           <div class="play-card">
-            <div class="play-img">${pl.photo?`<img src="${pl.photo}"/>`:'📸'}</div>
+            <div class="play-img" onclick="openLightbox('${pl.photo}','${pl.title}')">${pl.photo?`<img src="${pl.photo}"/>`:'📸'}</div>
             <div class="play-body">
               <div class="play-title">${pl.title}</div>
               ${pl.desc?`<div class="play-desc">${pl.desc}</div>`:''}
@@ -531,6 +555,21 @@ function checkPass() {
 document.getElementById('adminModal').addEventListener('click',function(e){
   if(e.target===this) closeModal();
 });
+
+function openLightbox(src, title) {
+  if (!src) return;
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox-title').textContent = title;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
 render();
 </script>
