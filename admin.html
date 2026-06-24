@@ -281,10 +281,19 @@
 const MAPS = ['Mirage','Inferno','Anubis','Ancient','Nuke','Overpass','Vertigo'];
 let currentMapPhoto = {}; // map -> base64
 
+const INFERNO_PLAYS = [
+  {id:1, title:'Pistolas 1',        desc:'', photo:'imagenes/pistolas1.png'},
+  {id:2, title:'2 Pistolas',        desc:'', photo:'imagenes/2_Pistolas.png'},
+  {id:3, title:'Rápida 2ª Ronda',   desc:'', photo:'imagenes/Rapida_2_ronda.png'},
+  {id:4, title:'T Estándar',        desc:'', photo:'imagenes/T_Estandar.png'},
+  {id:5, title:'Jugada A Larga',    desc:'', photo:'imagenes/Jugada_A_larga.png'},
+  {id:6, title:'1ª Jugada B',       desc:'', photo:'imagenes/1_Jugada_B.png'},
+  {id:7, title:'2ª Jugada B',       desc:'', photo:'imagenes/2_Jugada_B.png'},
+];
+
 function getData() {
   const raw = localStorage.getItem('2d2_data');
-  if (raw) return JSON.parse(raw);
-  return {
+  const d = raw ? JSON.parse(raw) : {
     practiceServer:'',
     coach:{nick:'Coach',name:'Nombre Real',photo:null},
     starters:[
@@ -298,6 +307,11 @@ function getData() {
     maps:{},
     social:{discordUrl:'',discordHandle:'Únete al servidor',twitchUrl:'',twitchHandle:'Ver streams'}
   };
+  if (!d.maps) d.maps = {};
+  if (!d.maps['Inferno'] || d.maps['Inferno'].length === 0) {
+    d.maps['Inferno'] = INFERNO_PLAYS;
+  }
+  return d;
 }
 
 function saveData(d) {
